@@ -1,40 +1,42 @@
-# dsh-plugin-product-manual · 产品功能手册生成器
+# dsh-plugin-product-manual · Product Manual Generator
 
-> 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（Cordis 插件体系）用的**产品访谈插件**：
-> 通过多轮对话把普通人脑中的模糊产品想法，整理成一份结构化《产品功能手册》——Markdown + PDF，
-> 外加一张截图就能转发的「一页纸」简介。
+> **English** | [中文](./README.zh-CN.md)
 
-## 它能做什么
+> A **product interview plugin** for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (Cordis plugin system):
+> it turns the fuzzy product idea in someone's head into a structured *Product Requirements Manual* through multi-turn dialogue — Markdown + PDF —
+> plus a screenshot-ready "one-pager" summary.
 
-- **访谈协议**：注入「产品访谈员」系统提示——每轮只问 1-2 个用户视角的问题（谁用/什么场景/输入/输出/怎样算成功），
-  **绝不主动问技术栈**；能用选项覆盖的问题优先给选项让用户点选。
-- **8 章手册**：产品定位 / 目标用户 / 使用场景 / 功能清单（P0-P2）/ 功能需求详述 / 非功能要求 /
-  明确不做 / **技术路线（由功能需求倒推）**——前七章不出现技术选型。
-- **同类产品检索**：`manual_research` 优先用宿主 `ctx.web` 搜索（覆盖 微信/知乎/网页），
-  **并内置 GitHub API 检索兜底**（无需任何宿主服务、无需 key；带 `GITHUB_TOKEN` 环境变量可提额），
-  把「别人怎么做」讲给用户听，结果进手册附录「参考案例」。
-- **完整手册 PDF**：Markdown → HTML → 本机 Edge 无头打印，文件名直接用产品名（如 `中学校友小程序.pdf`）。
-- **一页纸 PDF**：6 个亮点卡片（自动配图标）+ 三步上手 + 适合谁，A4 单页，正向文案、适合截图转发。
-- **反馈迭代**：`manual_feedback` 记录读者意见进附录；据此更新章节/一页纸文案后重新生成。
+## What it does
 
-## 安装到 DSH（本部署实测有效的方法）
+- **Interview protocol**: injects a "product interviewer" system prompt — only 1-2 user-facing questions per turn (who / what scenario / inputs / outputs / what counts as success),
+  **never asks about the tech stack proactively**; questions that can be answered with options are presented as clickable choices.
+- **8 chapters**: Product Positioning / Target Users / Usage Scenarios / Feature List (P0-P2) / Detailed Feature Requirements / Non-Functional Requirements /
+  Explicitly Out of Scope / **Technical Route (derived backwards from features)** — the first seven chapters contain no technology choices.
+- **Competitor research**: `manual_research` prefers the host `ctx.web` search service (covering WeChat / Zhihu / general web),
+  **and falls back to the built-in GitHub API** (no host service or key required; set `GITHUB_TOKEN` to raise the rate limit),
+  then explains "how others do it" and appends the results to the appendix "Reference Cases".
+- **Full manual PDF**: Markdown → HTML → headless print with the local Edge; the filename is just the product name (e.g. `Alumni Mini Program.pdf`).
+- **One-pager PDF**: 6 highlight cards (icons auto-assigned) + a three-step getting-started flow + who it is for, on a single A4 page — positive copy, ready to screenshot.
+- **Feedback loop**: `manual_feedback` records reader comments in the appendix; update the chapters / one-pager copy and regenerate.
 
-DSH 的 Web profile 在 `~/.dsh/profiles/web/`，它的本地插件标准位置是 `plugins/<包名>/`，
-再在 `cordis.patch.yml` 的 `insert` 列表里加一行（宿主组合，所有会话全局可用）。
+## Install into DSH (verified on a real deployment)
 
-### 1. 放置插件包
+The DSH Web profile lives in `~/.dsh/profiles/web/`. Local plugins belong in `plugins/<package-name>/`,
+and the host composition adds one row to the `insert` list in `cordis.patch.yml` (available to every session).
+
+### 1. Place the plugin package
 
 ```bash
-# 把本包拷到 profile 的 plugins 目录
+# Copy this package into the profile's plugins directory
 cp -r . ~/.dsh/profiles/web/plugins/dsh-plugin-product-manual
-# 包入口保持 index.js（本包的 lib/index.js 即入口，复制后重命名为 index.js）
+# Keep index.js as the entry (this package's lib/index.js is the entry; rename it to index.js after copying)
 ```
 
-目录里至少要有：`index.js`、`package.json`（`"type":"module"`、`"main":"index.js"`）。
+The directory needs at least `index.js` and `package.json` (`"type":"module"`, `"main":"index.js"`).
 
-### 2. 在 patch 里加一行
+### 2. Add a row to the patch
 
-编辑 `~/.dsh/profiles/web/cordis.patch.yml`：
+Edit `~/.dsh/profiles/web/cordis.patch.yml`:
 
 ```yaml
 - insert:
@@ -42,74 +44,78 @@ cp -r . ~/.dsh/profiles/web/plugins/dsh-plugin-product-manual
       name: './plugins/dsh-plugin-product-manual/index.js'
 ```
 
-### 3. 重启 DSH
+### 3. Restart DSH
 
-patch 在启动时读取，重启后插件行生效：所有会话都会出现
-`manual_start` / `manual_update` / `manual_research` / `manual_onepager` / `manual_feedback` / `manual_status` / `manual_render`。
+The patch is read at startup. After a restart every session gets
+`manual_start` / `manual_update` / `manual_research` / `manual_onepager` / `manual_feedback` / `manual_status` / `manual_render`.
 
-> 其它安装方式：
-> - **作为 npm 包**：在 `~/.dsh/profiles/web/` 里 `npm install dsh-plugin-product-manual`（或 `pnpm add`），
->   然后 patch 行写成裸包名 `name: dsh-plugin-product-manual`（裸名从 profile 目录解析）。
-> - **绝对路径行**：`name: E:\path\to\lib\index.js`（加载器会把绝对路径转成 file URL）。
+> Other installation options:
+> - **As an npm package**: run `npm install dsh-plugin-product-manual` (or `pnpm add`) inside `~/.dsh/profiles/web/`,
+>   then use the bare package name in the patch row: `name: dsh-plugin-product-manual` (bare names resolve from the profile directory).
+> - **Absolute path row**: `name: E:\path\to\lib\index.js` (the loader converts absolute paths to file URLs).
 
-## 使用
+## Usage
 
-对 agent 说：
+Tell the agent:
 
-> 我想做个「中学校友小程序」，帮我把产品功能手册写出来。
+> I want to build an "alumni mini program". Please write the product manual for me.
 
-agent 按访谈协议逐轮提问；随时可以说「看看别人怎么做的」触发检索；
-最后生成完整手册与一页纸 PDF，交付文件路径和可点击的 PDF 链接。
+The agent interviews you turn by turn; at any point say "let's see how others do it" to trigger research;
+at the end it generates the full manual and the one-pager PDF and gives you the file paths plus clickable PDF links.
 
-## 数据布局（工作区）
+## Data layout (workspace)
 
 ```
 product-manuals/
-├── .current.json                 # 当前手册指针（重启后自动恢复）
+├── .current.json                 # pointer to the current manual (restored automatically after restart)
 └── <manual-id>/
-    ├── state.json                # 8 章内容、参考案例、改进意见
-    ├── <产品名>.md / .pdf        # 完整手册
-    └── <产品名>-一页纸.pdf        # 一页纸
+    ├── state.json                # 8 chapter contents, reference cases, feedback
+    ├── <product name>.md / .pdf  # full manual
+    └── <product name>-onepager.pdf
 ```
 
-## 发布到 GitHub
+## Publish to GitHub
 
 ```bash
 git init && git add -A
-git commit -m "feat: 产品功能手册生成器插件"
-git remote add origin https://github.com/<你>/dsh-plugin-product-manual.git
+git commit -m "feat: product manual generator plugin"
+git remote add origin https://github.com/<you>/dsh-plugin-product-manual.git
 git push -u origin main
 ```
 
-发布到 npm（别人就能 `npm i` 安装）：
+Publish to npm (so others can `npm i`):
 
 ```bash
 npm publish
 ```
 
-## 已知边界 / 运行依赖
+## Known boundaries / runtime requirements
 
-- **搜索**：
-  - 首选宿主 `ctx.web` 搜索服务（本部署为 DeepSeek 搜索；覆盖 微信小程序案例 / 知乎 / 网页）；
-  - **GitHub 方向自带兜底**：插件内部直接调 GitHub REST API（`api.github.com/search/repositories`），
-    不依赖任何宿主服务，未认证限速 10 次/分钟；设置 `GITHUB_TOKEN` 环境变量可提额；
-  - 宿主没有 web 搜索 provider 时，非 github 方向会返回明确提示（建议改用 `sources:["github"]`）。
-- **PDF**：
-  - 插件自身完成 Markdown→HTML 转换，再调本机 Chromium 系浏览器无头 `--print-to-pdf`；
-  - 浏览器查找顺序：`DSH_PDF_BROWSER`/`DSH_CHROME`/`CHROME_PATH` 环境变量 → 常见 Windows/macOS/Linux 安装路径 → PATH 中的 `msedge`/`chrome`/`chromium`；
-  - 进程启动优先用宿主 `subprocess` 服务，缺失时退回 `node:child_process`；
-  - 找不到浏览器时仍会输出 Markdown，并在结果 `warnings` 里说明。
-- **宿主端插件（host-only）**：不含 Run 卡片里的客户端面板。客户端 UI 需要 `dsh.client` 打包产物，
-  且只由宿主组合的 loader entry 扫描；本包是纯宿主插件，面板请在动态版源码存档
-  （工作区 `plugins/product-manual/`）中查看。
-- PDF 路由前缀按插件实例随机（`/product-manuals-<rand>`），多会话/多实例不冲突。
-- 工具参数由插件自身校验（不走 `defineTool` 的自动校验）；返回输出不强制 schema。
+- **Search**:
+  - Prefers the host `ctx.web` search service (DeepSeek search in the reference deployment; covers WeChat mini-program cases / Zhihu / general web);
+  - **Built-in fallback for the GitHub direction**: the plugin calls the GitHub REST API directly (`api.github.com/search/repositories`)
+    with no host service; unauthenticated rate limit is 10 requests/minute, and setting `GITHUB_TOKEN` raises it;
+  - Without a web search provider, non-GitHub directions return a clear notice (include `sources:["github"]` instead).
+- **PDF**:
+  - The plugin converts Markdown→HTML itself, then invokes a local Chromium-based browser with headless `--print-to-pdf`;
+  - Browser lookup order: `DSH_PDF_BROWSER` / `DSH_CHROME` / `CHROME_PATH` env vars → common Windows/macOS/Linux install paths → `msedge`/`chrome`/`chromium` on `PATH`;
+  - Process launch prefers the host `subprocess` service and falls back to `node:child_process`;
+  - If no browser is found, Markdown is still produced and the reason appears in `warnings`.
+- **Host-only plugin**: no client panel inside the Run card. Client UI would require a `dsh.client` bundle
+  and is only scanned by host composition loader entries; this package is a pure host plugin.
+- The PDF route prefix is randomized per plugin instance (`/product-manuals-<rand>`), so multiple sessions/instances do not collide.
+- Tool arguments are validated by the plugin itself (not by `defineTool`'s automatic validation); outputs are not schema-enforced.
 
-## 冒烟测试
+## Smoke tests
 
 ```bash
 node test-research.mjs
+node test-lazy.mjs
 ```
 
-用假上下文加载插件，验证：7 个工具注册、`manual_start` 建手册、**无 web 服务时 GitHub 兜底检索**、状态回读。
+They load the plugin with fake contexts and verify: 7 tools registered, `manual_start` creates a manual,
+**GitHub fallback search when no web service is present**, lazy service resolution, and status read-back.
 
+## License
+
+MIT

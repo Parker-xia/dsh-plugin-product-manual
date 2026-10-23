@@ -1,5 +1,5 @@
-// 端到端验证：无 web 服务时，GitHub 内置检索能否兜底。
-import * as plugin from 'file:///E:/dsh/agent/plugins/dsh-plugin-product-manual/lib/index.js'
+﻿// End-to-end check: without a web service, can the built-in GitHub search serve as a fallback?
+import * as plugin from './lib/index.js'
 
 const files = new Map()
 const fsStub = {
@@ -22,9 +22,17 @@ const fakeCtx = {
     if (n === 'systemPrompt') return { section() { return () => {} } }
     if (n === 'webServer') return { register() { return () => {} } }
     if (n === 'timer') return { timeout() { return Promise.resolve() } }
-    return undefined // web / subprocess 均缺失：模拟"没有平台搜索、没有 subprocess"
+    return undefined // web / subprocess are both missing: simulates "no platform search, no subprocess"
   },
-  effect(fn) { const d = fn(); return typeof d === 'function' ? d : () => {} }
+  effect(fn) { const d = fn(); return typeof d === 'function' ? d : () => {} },
+  inject(_names, cb) {
+    const injected = {
+      effect(fn) { const d = fn(); return typeof d === 'function' ? d : () => {} },
+      systemPrompt: { section() { return () => {} } },
+      webServer: { register() { return () => {} } }
+    }
+    cb(injected)
+  }
 }
 
 plugin.apply(fakeCtx)
@@ -32,10 +40,10 @@ console.log('tools:', registered.map((t) => t.name).join(','))
 const byName = Object.fromEntries(registered.map((t) => [t.name, t]))
 const exec = { signal: undefined, agent: undefined }
 
-const s = await byName.manual_start.execute({ name: '测试产品', positioning: '一句话定位' }, exec)
+const s = await byName.manual_start.execute({ name: 'Test Product', positioning: 'One-line positioning' }, exec)
 console.log('start:', s.manualId, '|', s.filledCount + '/' + s.totalSections)
 
-const r = await byName.manual_research.execute({ query: '校友 小程序', sources: ['github'], note: '测试兜底' }, exec)
+const r = await byName.manual_research.execute({ query: 'alumni mini program', sources: ['github'], note: 'fallback test' }, exec)
 console.log('research:', JSON.stringify({ added: r.added, total: r.total, message: String(r.message || '').slice(0, 120) }))
 if (r.results && r.results[0]) console.log('first:', r.results[0].title, '|', r.results[0].url)
 
