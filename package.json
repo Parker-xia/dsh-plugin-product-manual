@@ -1,0 +1,38 @@
+{
+  "name": "dsh-plugin-product-manual",
+  "version": "0.1.0",
+  "description": "多轮访谈生成产品功能手册：8 章结构化需求 + Markdown/PDF（完整手册与一页纸），支持同类产品检索与读者反馈迭代。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "LICENSE",
+    "preset.example.yml"
+  ],
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "product-manual",
+    "pdf",
+    "product-interview"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Parker-xia/dsh-plugin-product-manual.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Parker-xia/dsh-plugin-product-manual/issues"
+  },
+  "homepage": "https://github.com/Parker-xia/dsh-plugin-product-manual#readme"
+}
